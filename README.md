@@ -157,3 +157,10 @@ in the config section above.
 
 After a run, `printer.stable_z_home.last_range` and `printer.stable_z_home.attempts`
 are available to macros.
+
+#### Optional: `[wall_clock]`
+
+`wall_clock.py` gives macros the current time as `printer.wall_clock.epoch`
+(seconds since 1970), which Klipper's Jinja lacks. Add an empty `[wall_clock]`
+section to `printer.cfg`. Useful e.g. to re-probe a saved bed mesh once it is
+older than N days. It trusts the Pi's clock, so check `date` on the Pi.

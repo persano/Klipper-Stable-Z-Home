@@ -61,3 +61,6 @@ try:
 except Err as e:
     assert 'deviates' in str(e)
 print('ok')
+import wall_clock
+assert wall_clock.load_config(None).get_status(0)['epoch'] > 1.7e9
+print('ok clock')

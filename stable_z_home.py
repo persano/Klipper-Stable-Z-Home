@@ -34,7 +34,15 @@ class StableZHome:
     def get_status(self, eventtime):
         return {'last_range': self.last_range,
                 'attempts': self.last_attempts}
+    def _log_result(self, result):
+        # One greppable line per run in klippy.log: grep STABLE_Z_HOME
+        logging.info("STABLE_Z_HOME %s: attempts=%d last_range=%s",
+                     result, self.last_attempts,
+                     '-' if self.last_range is None
+                     else '%.4f' % self.last_range)
+
     def _fail(self, msg):
+        self._log_result('failed')
         try:
             self.gcode.run_script_from_command(self.failure_gcode.render())
         except Exception:

@@ -142,6 +142,9 @@ The following parameters can be adjusted in the `[stable_z_home]` section:
 #  The maximum range between the min and max values of the Z offset in the window
 #  to consider the offset stable and complete the procedure. The default is
 #  0.0025mm.
+#failure_gcode:
+#  Gcode run once when homing fails (max retries, deviation, or a pre-home
+#  error), before the error is raised. E.g. TURN_OFF_HEATERS. Default: none.
 #max_deviation:
 #  Abort if a reading differs from the first one by more than this many mm,
 #  e.g. after a false probe trigger. The default is 0 (disabled).

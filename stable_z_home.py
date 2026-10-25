@@ -15,6 +15,9 @@ class StableZHome:
         self.gcode = self.printer.lookup_object('gcode')
         gcode_macro = self.printer.load_object(config, 'gcode_macro')
         self.before_homing_gcode = gcode_macro.load_template(config, 'gcode', '')
+        # Runs once when homing fails (e.g. TURN_OFF_HEATERS)
+        self.failure_gcode = gcode_macro.load_template(
+            config, 'failure_gcode', '')
         self.default_max_retries = config.getint("retries", 20, minval=0)
         self.default_retry_tolerance = \
             config.getfloat("retry_tolerance", 1 / 400., above=1/1000.)
@@ -31,6 +34,12 @@ class StableZHome:
     def get_status(self, eventtime):
         return {'last_range': self.last_range,
                 'attempts': self.last_attempts}
+    def _fail(self, msg):
+        try:
+            self.gcode.run_script_from_command(self.failure_gcode.render())
+        except Exception:
+            logging.exception("Exception running failure_gcode")
+        return self.gcode.error(msg)
     cmd_STABLE_Z_HOME_help = (
         "Repeatedly home Z until the Z stepper position stabilizes")
     def cmd_STABLE_Z_HOME(self, gcmd):
@@ -78,7 +87,7 @@ class StableZHome:
                     self.before_homing_gcode.render())
             except Exception as e:
                 logging.exception("Exception running pre-home script")
-                raise self.gcode.error('Pre-home Gcode failed: %s' % (e,))
+                raise self._fail('Pre-home Gcode failed: %s' % (e,))
 
             self.gcode.run_script_from_command('G28 Z')
 
@@ -88,7 +97,7 @@ class StableZHome:
             # bad (e.g. false) trigger.
             if (max_deviation and mcu_z_readings
                     and abs(mcu_pos - mcu_z_readings[0]) > max_deviation):
-                raise self.gcode.error(
+                raise self._fail(
                     'Z position %.4f deviates more than %.4f from first '
                     'reading %.4f, aborting'
                     % (mcu_pos, max_deviation, mcu_z_readings[0]))
@@ -114,7 +123,7 @@ class StableZHome:
             retries += 1
 
         if retries > max_retries:
-            raise self.gcode.error('Max retries exceeded\n')
+            raise self._fail('Max retries exceeded\n')
 
 
 def load_config(config):

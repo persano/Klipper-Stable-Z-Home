@@ -14,12 +14,16 @@ class Stepper:
     def get_commanded_position(self): return self.pos
 
 
+ran = []
+
+
 class Gcode:
     error = Err
     def __init__(self, stepper): self.s = stepper
     def register_command(self, *a, **k): pass
     def respond_info(self, msg): pass
     def run_script_from_command(self, script):
+        ran.append(script)
         if script == 'G28 Z':
             self.s.pos = next(self.s.positions)
 
@@ -39,6 +43,7 @@ def run(positions, **params):
     s = Stepper(positions)
     z = m.StableZHome.__new__(m.StableZHome)
     z.gcode, z.before_homing_gcode = Gcode(s), Tpl()
+    z.failure_gcode = Tpl()
     z.default_max_retries, z.default_retry_tolerance = 20, 0.0025
     z.default_window, z.default_max_deviation = 4, 0.
     z.last_range = z.last_attempts = None
@@ -60,6 +65,13 @@ try:
     raise SystemExit('guard did not trip')
 except Err as e:
     assert 'deviates' in str(e)
+# failure_gcode runs when homing never settles
+ran.clear()
+try:
+    run([1.0, 1.2, 1.0, 1.2], RETRIES=3)
+    raise SystemExit('no failure')
+except Err as e:
+    assert 'Max retries' in str(e) and ran[-1] == '', ran
 print('ok')
 import wall_clock
 assert wall_clock.load_config(None).get_status(0)['epoch'] > 1.7e9

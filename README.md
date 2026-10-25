@@ -46,7 +46,7 @@ settles at around -0.10mm.
 ### Installation
 
 ```
-$ cd ~ && git clone <this repo url> Klipper-Stable-Z-Home
+$ cd ~ && git clone https://github.com/persano/Klipper-Stable-Z-Home Klipper-Stable-Z-Home
 $ ~/Klipper-Stable-Z-Home/install.sh
 $ sudo systemctl restart klipper
 ```
@@ -60,7 +60,7 @@ Optional, to get updates from Mainsail/Fluidd, add to `moonraker.conf`:
 [update_manager Klipper-Stable-Z-Home]
 type: git_repo
 path: ~/Klipper-Stable-Z-Home
-origin: <this repo url>
+origin: https://github.com/persano/Klipper-Stable-Z-Home
 primary_branch: main
 install_script: install.sh
 managed_services: klipper

@@ -45,13 +45,30 @@ settles at around -0.10mm.
 
 ### Installation
 
-Clone the repo into the home directory of your Pi, then symlink `stable_z_home.py`
-into your Klipper installation, like this:
+```
+$ cd ~ && git clone <this repo url> Klipper-Stable-Z-Home
+$ ~/Klipper-Stable-Z-Home/install.sh
+$ sudo systemctl restart klipper
+```
+
+Re-run `install.sh` after reinstalling Klipper, otherwise Klipper reports
+`Section 'stable_z_home' is not a valid config section`.
+
+Optional, to get updates from Mainsail/Fluidd, add to `moonraker.conf`:
 
 ```
-$ cd ~/klipper/klippy/extras
-$ ln -s ~/Klipper-Stable-Z-Home/stable_z_home.py .
+[update_manager Klipper-Stable-Z-Home]
+type: git_repo
+path: ~/Klipper-Stable-Z-Home
+origin: <this repo url>
+primary_branch: main
+install_script: install.sh
+managed_services: klipper
 ```
+
+The config below goes in `printer.cfg`. `STABLE_Z_HOME` needs X and Y homed
+first, so call it after `G28 X Y` (not before). With a probe (BLTouch, inductive)
+leave `gcode:` empty; set `window: 3` for fewer homing passes.
 
 Add the following to your Klipper config file, adjusting the G-code, which will be
 run before each probe attempt, to your needs:

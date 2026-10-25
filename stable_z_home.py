@@ -14,7 +14,7 @@ class StableZHome:
         self.printer = config.get_printer()
         self.gcode = self.printer.lookup_object('gcode')
         gcode_macro = self.printer.load_object(config, 'gcode_macro')
-        self.before_homing_gcode = gcode_macro.load_template(config, 'gcode')
+        self.before_homing_gcode = gcode_macro.load_template(config, 'gcode', '')
         self.default_max_retries = config.getint("retries", 20, minval=0)
         self.default_retry_tolerance = \
             config.getfloat("retry_tolerance", 1 / 400., above=1/1000.)

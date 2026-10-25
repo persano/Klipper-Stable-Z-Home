@@ -19,10 +19,18 @@ class StableZHome:
         self.default_retry_tolerance = \
             config.getfloat("retry_tolerance", 1 / 400., above=1/1000.)
         self.default_window = config.getint("window", 4, minval=3)
+        # 0 disables the guard
+        self.default_max_deviation = config.getfloat(
+            "max_deviation", 0., minval=0.)
+        self.last_range = None
+        self.last_attempts = 0
         # Register STABLE_Z_HOME command
         self.gcode.register_command(
             'STABLE_Z_HOME', self.cmd_STABLE_Z_HOME,
             desc=self.cmd_STABLE_Z_HOME_help)
+    def get_status(self, eventtime):
+        return {'last_range': self.last_range,
+                'attempts': self.last_attempts}
     cmd_STABLE_Z_HOME_help = (
         "Repeatedly home Z until the Z stepper position stabilizes")
     def cmd_STABLE_Z_HOME(self, gcmd):
@@ -32,6 +40,10 @@ class StableZHome:
                                          self.default_retry_tolerance,
                                          minval=1/1000.)
         window = gcmd.get_int('WINDOW', self.default_window, minval=3)
+        max_deviation = gcmd.get_float('MAX_DEVIATION',
+                                       self.default_max_deviation, minval=0.)
+        self.last_range = None
+        self.last_attempts = 0
 
         toolhead = self.printer.lookup_object('toolhead', None)
         if toolhead is None:
@@ -64,14 +76,22 @@ class StableZHome:
             try:
                 self.gcode.run_script_from_command(
                     self.before_homing_gcode.render())
-            except Exception:
+            except Exception as e:
                 logging.exception("Exception running pre-home script")
-                raise self.gcode.error('Pre-home Gcode failed')
+                raise self.gcode.error('Pre-home Gcode failed: %s' % (e,))
 
             self.gcode.run_script_from_command('G28 Z')
 
             mcu_position_offset = -stepper.mcu_to_commanded_position(0)
             mcu_pos = stepper.get_commanded_position() + mcu_position_offset
+            # Abort before the next attempt drives the nozzle down on a
+            # bad (e.g. false) trigger.
+            if (max_deviation and mcu_z_readings
+                    and abs(mcu_pos - mcu_z_readings[0]) > max_deviation):
+                raise self.gcode.error(
+                    'Z position %.4f deviates more than %.4f from first '
+                    'reading %.4f, aborting'
+                    % (mcu_pos, max_deviation, mcu_z_readings[0]))
             mcu_z_readings.append(mcu_pos)
             mcu_z_readings = mcu_z_readings[-window:]
             if len(mcu_z_readings) == window:
@@ -85,6 +105,8 @@ class StableZHome:
                 'Retry %d: %s position %.4f, window range %s\n'
                 % (retries, stepper.get_name(), mcu_pos, window_range_str))
 
+            self.last_range = window_range
+            self.last_attempts = retries
             if window_range is not None and window_range <= retry_tolerance:
                 self.gcode.respond_info('Succeeded\n')
                 break

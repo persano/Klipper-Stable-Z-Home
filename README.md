@@ -142,12 +142,18 @@ The following parameters can be adjusted in the `[stable_z_home]` section:
 #  The maximum range between the min and max values of the Z offset in the window
 #  to consider the offset stable and complete the procedure. The default is
 #  0.0025mm.
+#max_deviation:
+#  Abort if a reading differs from the first one by more than this many mm,
+#  e.g. after a false probe trigger. The default is 0 (disabled).
 ```
 
-The parameters `RETRIES`, `RETRY_TOLERANCE`, and `WINDOW`, can also be passed
+The parameters `RETRIES`, `RETRY_TOLERANCE`, `WINDOW`, and `MAX_DEVIATION`, can also be passed
 to the `STABLE_Z_HOME` command, in which case they override the defaults set
 in the config section above.
 
 ---
 
 *Copyright (C) 2021 Matthew Lloyd*
+
+After a run, `printer.stable_z_home.last_range` and `printer.stable_z_home.attempts`
+are available to macros.

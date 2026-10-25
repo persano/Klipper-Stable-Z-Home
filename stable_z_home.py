@@ -126,6 +126,7 @@ class StableZHome:
             self.last_attempts = retries
             if window_range is not None and window_range <= retry_tolerance:
                 self.gcode.respond_info('Succeeded\n')
+                self._log_result('ok')
                 break
 
             retries += 1
